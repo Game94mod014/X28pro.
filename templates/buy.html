@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>فروشگاه اینترنت</title>
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" />
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Vazirmatn', sans-serif; }
+        body { background: #0f172a; color: #f8fafc; padding: 12px; animation: fadeIn 0.4s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+
+        .nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: #1e293b; padding: 12px 15px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .btn { background: #6366f1; color: white; border: none; padding: 8px 12px; border-radius: 8px; font-size: 0.8rem; cursor: pointer; transition: 0.2s; }
+        .btn:active { transform: scale(0.95); }
+        .btn-success { background: #10b981; }
+        .btn-danger { background: #ef4444; }
+        .btn-warning { background: #f59e0b; color: #000; font-weight: bold; }
+
+        .container { max-width: 480px; margin: 0 auto; }
+        
+        .pkg-card {
+            background: #1e293b; border: 2px solid #334155; border-radius: 12px; padding: 14px; margin-bottom: 12px; cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .pkg-card:hover { border-color: #6366f1; transform: translateY(-2px); }
+        .pkg-card.selected { border-color: #6366f1; background: #1e1b4b; box-shadow: 0 0 15px rgba(99, 102, 241, 0.3); }
+
+        .checkout-box { background: #1e293b; border-radius: 12px; padding: 16px; margin-top: 20px; border: 1px solid #334155; }
+        input { width: 100%; background: #0f172a; border: 1px solid #475569; color: white; padding: 10px; border-radius: 8px; margin-bottom: 10px; text-align: center; outline: none; }
+        
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; padding: 15px; z-index: 100; backdrop-filter: blur(5px); }
+        .modal.open { display: flex; }
+        .modal-content { background: #1e293b; padding: 20px; border-radius: 14px; width: 100%; max-width: 350px; border: 1px solid #334155; text-align: center; }
+
+        /* استایل نوتیفیکیشن */
+        .notif-badge { position: relative; display: inline-block; cursor: pointer; background: #334155; padding: 6px 10px; border-radius: 8px; font-size: 0.8rem; }
+        .dot { position: absolute; top: -2px; right: -2px; width: 10px; height: 10px; background: #ef4444; border-radius: 50%; display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span id="user-info" style="font-weight: bold; color: #38bdf8;">مهمان</span>
+                <!-- دکمه باقی‌مانده حجم -->
+                <button class="btn btn-warning" id="traffic-btn" style="display:none;" onclick="showTraffic()">📊 باقیمانده</button>
+                <!-- آیکون نوتیفیکیشن -->
+                <div class="notif-badge" id="notif-icon" style="display:none;" onclick="showNotif()">
+                    🔔 <span class="dot" id="notif-dot"></span>
+                </div>
+            </div>
+            <div style="display: flex; gap: 6px;">
+                <button class="btn" id="auth-btn" onclick="openModal('auth-modal')">ورود</button>
+                <button class="btn btn-danger" onclick="window.location.href='/admin'">مدیریت</button>
+            </div>
+        </div>
+
+        <h2 style="font-size: 1.1rem; margin-bottom: 12px; color: #94a3b8;">لیست بسته‌های اینترنت:</h2>
+        <div id="pkg-list"></div>
+
+        <div class="checkout-box">
+            <div style="display:flex; gap:8px;">
+                <input type="text" id="disc-code" placeholder="کد تخفیف">
+                <button class="btn" style="height: 42px;" onclick="applyDiscount()">اعمال</button>
+            </div>
+            <p style="margin: 8px 0; font-size: 0.9rem;">بسته: <span id="sel-name" style="color: #f8fafc; font-weight: bold;">انتخاب نشده</span></p>
+            <p style="margin: 8px 0; font-size: 0.95rem;">مبلغ: <span id="sel-price" style="color:#34d399; font-weight: bold;">0</span> تومان</p>
+            <button class="btn btn-success" style="width: 100%; margin-top: 10px; padding: 12px; font-size: 1rem;" onclick="submitOrder()">ثبت سفارش</button>
+        </div>
+    </div>
+
+    <!-- مودال حساب کاربری -->
+    <div class="modal" id="auth-modal">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 12px; color: #38bdf8;">حساب کاربری</h3>
+            <input type="text" id="acc-user" placeholder="نام کاربری">
+            <input type="password" id="acc-pass" placeholder="رمز عبور">
+            <button class="btn btn-success" style="width: 100%; margin-bottom: 8px; padding: 10px;" onclick="login()">ورود</button>
+            <button class="btn" style="width: 100%; margin-bottom: 10px; padding: 10px;" onclick="register()">ثبت‌نام جدید</button>
+            <button class="btn btn-danger" style="width: 100%; padding: 8px;" onclick="closeModal('auth-modal')">بستن</button>
+        </div>
+    </div>
+
+    <!-- مودال نمایش پیام‌ها -->
+    <div class="modal" id="msg-modal">
+        <div class="modal-content">
+            <h3 id="msg-title" style="margin-bottom: 10px; color: #38bdf8;">پیام سیستم</h3>
+            <p id="msg-body" style="font-size: 0.95rem; margin-bottom: 15px; line-height: 1.6;"></p>
+            <button class="btn btn-success" style="width: 100%;" onclick="closeModal('msg-modal')">متوجه شدم</button>
+        </div>
+    </div>
+
+    <script>
+        let selectedPkg = null, discountPercent = 0, currentUser = null, latestNotifText = "";
+
+        function openModal(id) { document.getElementById(id).classList.add('open'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+        async function checkUser() {
+            const res = await fetch('/api/current-user');
+            const data = await res.json();
+            currentUser = data.user;
+            if (currentUser) {
+                document.getElementById('user-info').innerText = currentUser;
+                document.getElementById('auth-btn').innerText = 'خروج';
+                document.getElementById('auth-btn').onclick = logout;
+                document.getElementById('traffic-btn').style.display = 'inline-block';
+                document.getElementById('notif-icon').style.display = 'inline-block';
+                
+                if (data.has_notif) {
+                    document.getElementById('notif-dot').style.display = 'block';
+                    latestNotifText = data.notif_text;
+                } else {
+                    document.getElementById('notif-dot').style.display = 'none';
+                }
+            } else {
+                document.getElementById('user-info').innerText = 'مهمان';
+                document.getElementById('auth-btn').innerText = 'ورود';
+                document.getElementById('auth-btn').onclick = () => openModal('auth-modal');
+                document.getElementById('traffic-btn').style.display = 'none';
+                document.getElementById('notif-icon').style.display = 'none';
+            }
+        }
+
+        function showTraffic() {
+            fetch('/api/current-user').then(r => r.json()).then(data => {
+                document.getElementById('msg-title').innerText = '📊 وضعیت حجم شما';
+                document.getElementById('msg-body').innerText = `حجم باقیمانده اشتراک شما:\n${data.traffic}`;
+                openModal('msg-modal');
+            });
+        }
+
+        function showNotif() {
+            document.getElementById('msg-title').innerText = '🔔 اعلان جدید';
+            document.getElementById('msg-body').innerText = latestNotifText || 'اعلان جدیدی وجود ندارد.';
+            openModal('msg-modal');
+            document.getElementById('notif-dot').style.display = 'none'; // خوانده شده
+        }
+
+        async function login() {
+            const res = await fetch('/api/login', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({username: document.getElementById('acc-user').value, password: document.getElementById('acc-pass').value})
+            });
+            if (res.ok) { closeModal('auth-modal'); checkUser(); alert('خوش آمدید'); }
+            else { alert('اطلاعات اشتباه است'); }
+        }
+
+        async function register() {
+            const res = await fetch('/api/register', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({username: document.getElementById('acc-user').value, password: document.getElementById('acc-pass').value})
+            });
+            if (res.ok) { closeModal('auth-modal'); checkUser(); alert('حساب شما ایجاد شد'); }
+            else { alert('نام کاربری تکراری است'); }
+        }
+
+        async function logout() { await fetch('/api/logout', {method: 'POST'}); checkUser(); }
+
+        async function loadPackages() {
+            const res = await fetch('/api/packages');
+            const pkgs = await res.json();
+            const container = document.getElementById('pkg-list');
+            container.innerHTML = '';
+            pkgs.forEach(p => {
+                container.innerHTML += `
+                    <div class="pkg-card" onclick='selectPkg(${JSON.stringify(p)}, this)'>
+                        <div style="font-weight:bold; color: #f8fafc;">${p.name}</div>
+                        <div style="font-size:0.8rem; color:#94a3b8; margin-top:2px;">${p.spec}</div>
+                        <div style="color:#34d399; font-weight: bold; margin-top:6px;">${p.price.toLocaleString()} تومان</div>
+                    </div>
+                `;
+            });
+        }
+
+        function selectPkg(pkg, el) {
+            document.querySelectorAll('.pkg-card').forEach(c => c.classList.remove('selected'));
+            el.classList.add('selected');
+            selectedPkg = pkg;
+            document.getElementById('sel-name').innerText = selectedPkg.name;
+            document.getElementById('sel-price').innerText = (selectedPkg.price * (1 - discountPercent / 100)).toLocaleString();
+        }
+
+        async function applyDiscount() {
+            const res = await fetch('/api/check-discount', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ code: document.getElementById('disc-code').value })
+            });
+            const data = await res.json();
+            if (data.valid) { discountPercent = data.percent; alert(`تخفیف اعمال شد`); }
+            else { discountPercent = 0; alert(data.message); }
+            if (selectedPkg) selectPkg(selectedPkg, document.querySelector('.pkg-card.selected'));
+        }
+
+        async function submitOrder() {
+            if (!currentUser) { alert('ابتدا وارد شوید'); openModal('auth-modal'); return; }
+            if (!selectedPkg) { alert('بسته‌ای انتخاب کنید'); return; }
+            const res = await fetch('/api/orders', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ package: selectedPkg.name, price: selectedPkg.price * (1 - discountPercent / 100) })
+            });
+            if (res.ok) alert('سفارش ثبت شد و در انتظار تایید مدیر است.');
+        }
+
+        checkUser();
+        loadPackages();
+        setInterval(checkUser, 10000); // آپدیت خودکار نوتیفیکیشن‌ها هر ۱۰ ثانیه
+    </script>
+</body>
+</html>

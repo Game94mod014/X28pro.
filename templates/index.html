@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سامانه خرید بسته اینترنت ZLT X28</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body data-user-logged="{{ 'true' if user else 'false' }}">
+
+    <header>
+        <div class="brand">
+            <div class="logo-badge">5G</div>
+            <div class="brand-title">مودم <span>ZLT X28</span></div>
+        </div>
+        <div class="nav-btns">
+            {% if user %}
+                <span style="font-size:0.9rem; color:#38bdf8; align-self:center;">👤 {{ user }}</span>
+                <a href="/logout" class="btn btn-outline" style="border-color:#ef4444; color:#ef4444;">خروج</a>
+            {% else %}
+                <button onclick="openModal('login-modal')" class="btn btn-primary">ورود کاربران</button>
+            {% endif %}
+            <button onclick="checkAdminPass()" class="btn btn-outline">مدیریت</button>
+        </div>
+    </header>
+
+    {% if announcement %}
+    <div class="announcement-bar">
+        <span>📢</span>
+        <div>{{ announcement }}</div>
+    </div>
+    {% endif %}
+
+    <div class="container">
+        <div class="section-title">
+            <h2>بسته‌های اینترنت پرسرعت</h2>
+            <p>بسته مورد نظر خود را انتخاب کرده و سریعاً فعال کنید</p>
+        </div>
+
+        <div class="tabs-wrapper">
+            <div class="tabs-container">
+                <button onclick="switchTab('daily')" id="btn-daily" class="tab-btn active">روزانه</button>
+                <button onclick="switchTab('weekly')" id="btn-weekly" class="tab-btn">هفتگی</button>
+                <button onclick="switchTab('monthly')" id="btn-monthly" class="tab-btn">ماهانه</button>
+            </div>
+        </div>
+
+        <!-- روزانه -->
+        <div id="daily" class="tab-content active">
+            {% for pkg in packages if pkg.type == 'daily' %}
+            <div class="card">
+                {% if pkg.discount %}
+                <div class="card-badge">{{ pkg.discount }}</div>
+                {% endif %}
+                <div class="card-title">{{ pkg.name }}</div>
+                <div class="card-duration">{{ pkg.duration }}</div>
+                <div class="card-price">{{ pkg.price }}</div>
+                <button onclick="prepareBuy('{{ pkg.name }}')" class="btn btn-primary">خرید و فعال‌سازی</button>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- هفتگی -->
+        <div id="weekly" class="tab-content">
+            {% for pkg in packages if pkg.type == 'weekly' %}
+            <div class="card">
+                {% if pkg.discount %}
+                <div class="card-badge">{{ pkg.discount }}</div>
+                {% endif %}
+                <div class="card-title">{{ pkg.name }}</div>
+                <div class="card-duration">{{ pkg.duration }}</div>
+                <div class="card-price">{{ pkg.price }}</div>
+                <button onclick="prepareBuy('{{ pkg.name }}')" class="btn btn-primary">خرید و فعال‌سازی</button>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- ماهانه -->
+        <div id="monthly" class="tab-content">
+            {% for pkg in packages if pkg.type == 'monthly' %}
+            <div class="card">
+                {% if pkg.discount %}
+                <div class="card-badge">{{ pkg.discount }}</div>
+                {% endif %}
+                <div class="card-title">{{ pkg.name }}</div>
+                <div class="card-duration">{{ pkg.duration }}</div>
+                <div class="card-price">{{ pkg.price }}</div>
+                <button onclick="prepareBuy('{{ pkg.name }}')" class="btn btn-primary">خرید و فعال‌سازی</button>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- مدال ورود کاربر (با نام کاربری و رمز عبور) -->
+    <div id="login-modal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-title">ورود به حساب کاربری</div>
+            <form onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label>نام کاربری (Username):</label>
+                    <input type="text" name="username" class="form-control" placeholder="مثلا: user1" required>
+                </div>
+                <div class="form-group">
+                    <label>رمز عبور (Password):</label>
+                    <input type="password" name="password" class="form-control" placeholder="***" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; margin-top:10px;">ورود</button>
+                <button type="button" onclick="closeModal('login-modal')" class="btn btn-outline" style="width:100%; justify-content:center; margin-top:8px;">بستن</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- مدال تأیید خرید -->
+    <div id="buy-modal" class="modal-overlay">
+        <div class="modal-card" style="text-align:center;">
+            <div class="modal-title" id="buy-pkg-title">تأیید سفارش خرید</div>
+            <p style="color:#94a3b8; font-size:0.9rem; margin-bottom:20px;">آیا مایل به فعال‌سازی این بسته روی خط خود هستید؟</p>
+            <button onclick="confirmBuy()" class="btn btn-primary" style="width:100%; justify-content:center; margin-bottom:10px;">بله، فعال کن</button>
+            <button onclick="closeModal('buy-modal')" class="btn btn-outline" style="width:100%; justify-content:center;">انصراف</button>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

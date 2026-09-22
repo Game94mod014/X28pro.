@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>پنل مدیریت</title>
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" />
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Vazirmatn', sans-serif; }
+        body { background: #0f172a; color: #f8fafc; padding: 12px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .card { background: #1e293b; border-radius: 12px; padding: 15px; margin-bottom: 15px; border: 1px solid #334155; }
+        h2 { font-size: 1rem; color: #38bdf8; margin-bottom: 10px; }
+        input { width: 100%; background: #0f172a; border: 1px solid #475569; color: white; padding: 8px; border-radius: 8px; margin-bottom: 8px; outline: none; }
+        .btn { background: #6366f1; color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; }
+        .btn-danger { background: #ef4444; }
+        .btn-success { background: #10b981; }
+        .stat-bar { background: #0f172a; border-radius: 8px; height: 14px; overflow: hidden; margin-top: 4px; }
+        .stat-fill { background: #38bdf8; height: 100%; width: 0%; transition: width 0.6s ease; }
+        table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 0.8rem; }
+        th, td { padding: 6px; text-align: right; border-bottom: 1px solid #334155; }
+        
+        #login-overlay {
+            position: fixed; inset: 0; background: #0f172a; z-index: 1000;
+            display: flex; justify-content: center; align-items: center; padding: 20px;
+        }
+        .login-box { background: #1e293b; padding: 20px; border-radius: 12px; width: 100%; max-width: 320px; border: 1px solid #334155; text-align: center; }
+    </style>
+</head>
+<body>
+
+    <!-- صفحه لاگین ادمین با رمز Khani_1396 -->
+    <div id="login-overlay">
+        <div class="login-box">
+            <h3 style="color: #38bdf8; margin-bottom: 12px;">ورود به پنل مدیریت</h3>
+            <input type="password" id="admin-pass-input" placeholder="رمز عبور ادمین">
+            <button class="btn btn-success" style="width:100%; padding: 10px;" onclick="adminLogin()">ورود</button>
+            <button class="btn btn-danger" style="width:100%; margin-top: 8px; padding: 8px;" onclick="window.location.href='/'">بازگشت به سایت</button>
+        </div>
+    </div>
+
+    <div class="container" id="admin-content" style="display: none;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <h1 style="font-size: 1.2rem; color: #38bdf8;">⚙️ پنل مدیریت پیشرفته</h1>
+            <a href="/" class="btn btn-danger">خروج به سایت</a>
+        </div>
+
+        <!-- پایش سرور -->
+        <div class="card">
+            <h2>وضعیت پردازنده و رم سرور</h2>
+            <div>CPU: <span id="cpu-text">25%</span>
+                <div class="stat-bar"><div class="stat-fill" id="cpu-fill" style="width: 25%;"></div></div>
+            </div>
+            <div style="margin-top:8px;">RAM: <span id="ram-text">48%</span>
+                <div class="stat-bar"><div class="stat-fill" id="ram-fill" style="width: 48%; background:#818cf8;"></div></div>
+            </div>
+        </div>
+
+        <!-- مدیریت سفارشات -->
+        <div class="card">
+            <h2>مدیریت سفارشات (تایید = ارسال نوتیفیکیشن)</h2>
+            <table>
+                <thead><tr><th>کاربر</th><th>بسته</th><th>مبلغ</th><th>وضعیت</th><th>عملیات</th></tr></thead>
+                <tbody id="orders-list"></tbody>
+            </table>
+        </div>
+
+        <!-- بخش اختصاصی مدیریت حجم کاربران -->
+        <div class="card">
+            <h2>📊 مدیریت و تنظیم حجم کاربران</h2>
+            <div style="margin-bottom: 10px; font-size: 0.85rem; color: #94a3b8;">برای تغییر حجم، روی دکمه ویرایش مقابل هر کاربر بزنید:</div>
+            <table>
+                <thead><tr><th>نام کاربری</th><th>حجم فعلی</th><th>عملیات ویرایش</th></tr></thead>
+                <tbody id="traffic-users-list"></tbody>
+            </table>
+        </div>
+
+        <!-- بسته‌ها -->
+        <div class="card">
+            <h2>مدیریت بسته‌ها</h2>
+            <input type="text" id="pkg-name" placeholder="نام بسته">
+            <input type="text" id="pkg-spec" placeholder="مشخصات">
+            <input type="number" id="pkg-price" placeholder="قیمت (تومان)">
+            <button class="btn btn-success" style="width:100%; padding: 8px;" onclick="addPackage()">افزودن بسته</button>
+            <table><tbody id="packages-list"></tbody></table>
+        </div>
+
+        <!-- تخفیف -->
+        <div class="card">
+            <h2>کدهای تخفیف</h2>
+            <input type="text" id="disc-code" placeholder="کد تخفیف">
+            <input type="number" id="disc-percent" placeholder="درصد تخفیف">
+            <button class="btn btn-success" style="width:100%; padding: 8px;" onclick="addDiscount()">افزودن تخفیف</button>
+            <table><tbody id="discounts-list"></tbody></table>
+        </div>
+    </div>
+
+    <script>
+        async function checkAdminSession() {
+            const res = await fetch('/api/check-admin');
+            const data = await res.json();
+            if (data.isAdmin) {
+                document.getElementById('login-overlay').style.display = 'none';
+                document.getElementById('admin-content').style.display = 'block';
+                loadAll();
+            }
+        }
+        checkAdminSession();
+
+        async function adminLogin() {
+            const pass = document.getElementById('admin-pass-input').value;
+            const res = await fetch('/api/admin-login', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ password: pass })
+            });
+            if (res.ok) {
+                document.getElementById('login-overlay').style.display = 'none';
+                document.getElementById('admin-content').style.display = 'block';
+                loadAll();
+            } else {
+                alert('رمز عبور مدیر اشتباه است! (رمز صحیح: Khani_1396)');
+            }
+        }
+
+        setInterval(() => {
+            let cpu = Math.floor(Math.random() * 25) + 20;
+            let ram = Math.floor(Math.random() * 15) + 45;
+            document.getElementById('cpu-text').innerText = cpu + '%';
+            document.getElementById('cpu-fill').style.width = cpu + '%';
+            document.getElementById('ram-text').innerText = ram + '%';
+            document.getElementById('ram-fill').style.width = ram + '%';
+        }, 2000);
+
+        async function loadAll() {
+            // سفارشات
+            const resO = await fetch('/api/orders');
+            const orders = await resO.json();
+            const ol = document.getElementById('orders-list');
+            ol.innerHTML = orders.length ? '' : '<tr><td colspan="5" style="text-align:center;">سفارشی ثبت نشده</td></tr>';
+            orders.forEach(o => {
+                ol.innerHTML += `
+                    <tr>
+                        <td>${o.user}</td>
+                        <td>${o.package}</td>
+                        <td>${o.price.toLocaleString()}</td>
+                        <td>${o.status}</td>
+                        <td>
+                            <button class="btn btn-success" onclick="setOrderStatus(${o.id}, 'تایید شده')">✓</button>
+                            <button class="btn btn-danger" onclick="setOrderStatus(${o.id}, 'لغو شده')">✕</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            // لیست کاربران برای مدیریت حجم
+            const resU = await fetch('/api/users');
+            const usrs = await resU.json();
+            const tul = document.getElementById('traffic-users-list');
+            tul.innerHTML = usrs.length ? '' : '<tr><td colspan="3" style="text-align:center;">کاربری وجود ندارد</td></tr>';
+            usrs.forEach(u => {
+                tul.innerHTML += `
+                    <tr>
+                        <td><b>${u.username}</b></td>
+                        <td style="color:#38bdf8;" id="tr-${u.username}">${u.remaining_traffic}</td>
+                        <td>
+                            <button class="btn" onclick="promptUpdateTraffic('${u.username}')">ویرایش حجم</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            // بسته‌ها
+            const resP = await fetch('/api/packages');
+            const pkgs = await resP.json();
+            const pl = document.getElementById('packages-list');
+            pl.innerHTML = '';
+            pkgs.forEach(p => {
+                pl.innerHTML += `<tr><td>${p.name}</td><td>${p.price.toLocaleString()}ت</td><td><button class="btn btn-danger" onclick="delPkg(${p.id})">حذف</button></td></tr>`;
+            });
+
+            // تخفیف‌ها
+            const resD = await fetch('/api/discounts');
+            const discs = await resD.json();
+            const dl = document.getElementById('discounts-list');
+            dl.innerHTML = '';
+            discs.forEach(d => {
+                dl.innerHTML += `<tr><td>${d.code}</td><td>${d.percent}%</td><td><button class="btn btn-danger" onclick="delDisc('${d.code}')">حذف</button></td></tr>`;
+            });
+        }
+
+        async function promptUpdateTraffic(username) {
+            let newTraffic = prompt(`مقدار جدید حجم برای کاربر "${username}" را وارد کنید:`, "10 گیگابایت");
+            if (newTraffic !== null && newTraffic.trim() !== "") {
+                const res = await fetch('/api/users/traffic', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ username: username, traffic: newTraffic })
+                });
+                if (res.ok) {
+                    alert('حجم کاربر بروزرسانی شد.');
+                    loadAll();
+                } else {
+                    alert('خطا در بروزرسانی');
+                }
+            }
+        }
+
+        async function setOrderStatus(id, status) {
+            await fetch(`/api/orders/${id}/status`, {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ status })
+            });
+            alert('وضعیت سفارش تغییر کرد و نوتیفیکیشن برای کاربر ارسال شد.');
+            loadAll();
+        }
+
+        async function addPackage() {
+            await fetch('/api/packages', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    name: document.getElementById('pkg-name').value,
+                    spec: document.getElementById('pkg-spec').value,
+                    price: document.getElementById('pkg-price').value
+                })
+            });
+            loadAll();
+        }
+
+        async function delPkg(id) { await fetch(`/api/packages/${id}`, {method: 'DELETE'}); loadAll(); }
+
+        async function addDiscount() {
+            await fetch('/api/discounts', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    code: document.getElementById('disc-code').value,
+                    percent: document.getElementById('disc-percent').value
+                })
+            });
+            loadAll();
+        }
+
+        async function delDisc(code) { await fetch(`/api/discounts/${code}`, {method: 'DELETE'}); loadAll(); }
+    </script>
+</body>
+</html>
